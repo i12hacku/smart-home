@@ -1,0 +1,151 @@
+#include <Wire.h> 
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+Adafruit_SSD1306 oled = Adafruit_SSD1306(128,64,&Wire);
+
+int rainsense= A2;  // analog sensor input pin 2
+int ldrPin = A3; 
+int buzzerout= 10;  // digital output pin 10 - buzzer output
+int countval= 0;  // counter value starting from 0 and goes up by 1 every second
+int ledout= 11; // digital output pin 11 - led output
+
+//motor limit switch
+#include <ezButton.h>
+
+#define ENA_PIN 7  // The Arduino pin connected to the EN1 pin L298N
+#define IN1_PIN 6  // The Arduino pin connected to the IN1 pin L298N
+#define IN2_PIN 5  // The Arduino pin connected to the IN2 pin L298N
+
+
+void setup() {
+
+   // limitSwitch.setDebounceTime(50);  // set debounce time to 50 milliseconds
+oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+
+   Serial.begin(9600);
+   pinMode(buzzerout, OUTPUT);
+   pinMode(ledout, OUTPUT); 
+    pinMode(ldrPin, OUTPUT); 
+   pinMode(rainsense, INPUT);
+   
+  //motor driver controls
+  pinMode(ENA_PIN, OUTPUT);
+  pinMode(IN1_PIN, OUTPUT);
+  pinMode(IN2_PIN, OUTPUT);
+
+
+  //Setup the LCD Display
+  
+
+}
+
+void loop() {
+
+  limitSwitch.setDebounceTime(50);  // set debounce time to 50 milliseconds
+
+    oled.clearDisplay();
+  oled.setTextColor(WHITE);
+
+   //Read the data from the 
+   int rainSenseReading = analogRead(rainsense);
+   int ldrStatus = analogRead(ldrPin); //saving the analog values received from LDR
+
+   Serial.println(rainSenseReading);  // serial monitoring message 
+   Serial.println(ldrStatus);  // serial monitoring message 
+
+
+
+    if( rainSenseReading < 450 ) {
+         oled.clearDisplay();
+         oled.setTextColor(WHITE);
+         oled.setTextSize(2);
+         oled.clearDisplay();
+         oled.setCursor(20,22);
+         oled.print("Raning!");
+         oled.display();
+
+        //Rotate motor anticlockwise
+          digitalWrite(ENA_PIN, HIGH);  // max speed
+          digitalWrite(IN1_PIN, HIGH);  // control motor A spins clockwise
+          digitalWrite(IN2_PIN, LOW);   // control motor A spins clockwise
+
+          digitalWrite(buzzerout, HIGH);  // turn on buzzer
+          
+    }
+      /*else if (limitSwitch.isPressed()) {
+          Serial.println(F("The limit switch: TOUCHED"));
+          digitalWrite(IN1_PIN, LOW);  // stop motor
+          digitalWrite(IN2_PIN, LOW);  // stop motor;
+
+
+      }*/
+      
+      else if((rainSenseReading > 450) or (ldrStatus > 600)){
+
+         oled.setTextSize(1);        
+         oled.clearDisplay();
+         oled.setCursor(0,0);
+         oled.print("Sunny!");
+         oled.display();
+
+            
+                //Rotate motor anticlockwise
+                digitalWrite(ENA_PIN, HIGH);  // max speed
+                digitalWrite(IN1_PIN, LOW);  // control motor A spins clockwise
+                digitalWrite(IN2_PIN, HIGH);   // control motor A spins clockwise
+
+                digitalWrite(buzzerout, LOW);  // turn off buzzer 
+        }
+
+        else if (limitSwitch.isPressed()) {
+          Serial.println(F("The limit switch: TOUCHED"));
+          digitalWrite(IN1_PIN, LOW);  // stop motor
+          digitalWrite(IN2_PIN, LOW);  // stop motor;
+
+
+      }
+      
+        else if(ldrStatus < 600){
+         oled.setTextSize(2);
+         oled.setCursor(0,0);
+         oled.print("Evening!");
+
+         oled.display();
+
+          digitalWrite(4, HIGH);
+          delay(1000);
+          digitalWrite(4, LOW);
+
+          }
+
+
+
+
+            limitSwitch.loop();
+
+            if (limitSwitch.isPressed()) {
+              Serial.println(F("The limit switch: TOUCHED"));
+              digitalWrite(IN1_PIN, LOW);  // stop motor
+              digitalWrite(IN2_PIN, LOW);  // stop motor;
+
+                else if (((rainSenseReading > 450) or (ldrStatus > 600)))  {
+                        //Rotate motor anticlockwise
+                         digitalWrite(ENA_PIN, HIGH);  // max speed
+                         digitalWrite(IN1_PIN, LOW);  // control motor A spins clockwise
+                         digitalWrite(IN2_PIN, HIGH);   // control motor A spins clockwise
+
+
+                 }
+
+                 else if (limitSwitch.isPressed())
+                 {
+                    Serial.println(F("The limit switch: TOUCHED"));
+                    digitalWrite(IN1_PIN, LOW);  // stop motor
+                    digitalWrite(IN2_PIN, LOW);  // stop motor;
+                 }
+                 
+            
+            
+             }       
+}
